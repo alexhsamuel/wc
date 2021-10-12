@@ -19,6 +19,7 @@ fn word_count(string: &str) -> usize {
 }
 
 fn main() {
+    let exe = std::env::args().next().unwrap();
     let path = match std::env::args().skip(1).next() {
         Some(p) => p,
         None => panic!("no file given"),
@@ -26,7 +27,13 @@ fn main() {
 
     let mut counts = Counts { ..EMPTY_COUNTS };
 
-    let file = File::open(&path).unwrap(); // FIXME
+    let file = match File::open(&path) {
+        Ok(file) => file,
+        Err(why) => {
+            eprintln!("{}: {}: {}", exe, path, why);
+            std::process::exit(1);
+        }
+    };
     let mut reader = BufReader::new(file);
     let mut line = String::new();
     loop {
