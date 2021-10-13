@@ -154,6 +154,11 @@ fn main() {
         show_words = true;
         show_lines = true;
     }
+    let print_row = |p: &str, c: &Counts| {
+        print_counts(
+            &p, &c, show_lines, show_words, show_chars, show_bytes, show_maxln,
+        )
+    };
 
     let mut total = Counts { ..EMPTY_COUNTS };
     for path in opts.values_of("path").unwrap() {
@@ -165,14 +170,10 @@ fn main() {
             }
         };
         let counts = count_file(&path, &file);
-        print_counts(
-            &path, &counts, show_lines, show_words, show_chars, show_bytes, show_maxln,
-        );
+        print_row(&path, &counts);
         total = combine_counts(&total, &counts);
     }
     if total.count > 1 {
-        print_counts(
-            "total", &total, show_lines, show_words, show_chars, show_bytes, show_maxln,
-        );
+        print_row("total", &total);
     }
 }
