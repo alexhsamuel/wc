@@ -38,7 +38,10 @@ fn combine_counts(c0: &Counts, c1: &Counts) -> Counts {
 }
 
 fn count_file(file: &File) -> Counts {
-    let mut counts = Counts { count: 1, ..EMPTY_COUNTS };
+    let mut counts = Counts {
+        count: 1,
+        ..EMPTY_COUNTS
+    };
 
     let mut reader = BufReader::new(file);
     let mut line = String::new();
@@ -59,7 +62,14 @@ fn count_file(file: &File) -> Counts {
     counts
 }
 
-fn print_counts(path: &str, counts: &Counts, show_lines: bool, show_words: bool, show_chars: bool, show_bytes: bool) {
+fn print_counts(
+    path: &str,
+    counts: &Counts,
+    show_lines: bool,
+    show_words: bool,
+    show_chars: bool,
+    show_bytes: bool,
+) {
     if show_lines {
         print!("{:7} ", counts.lines);
     }
@@ -73,7 +83,7 @@ fn print_counts(path: &str, counts: &Counts, show_lines: bool, show_words: bool,
         print!("{:7} ", counts.bytes);
     }
     println!("{}", path);
-}    
+}
 
 fn main() {
     let exe = std::env::args().next().unwrap();
@@ -129,10 +139,14 @@ fn main() {
             }
         };
         let counts = count_file(&file);
-        print_counts(&path, &counts, show_lines, show_words, show_chars, show_bytes);
+        print_counts(
+            &path, &counts, show_lines, show_words, show_chars, show_bytes,
+        );
         total = combine_counts(&total, &counts);
     }
     if total.count > 1 {
-        print_counts("total", &total, show_lines, show_words, show_chars, show_bytes);
+        print_counts(
+            "total", &total, show_lines, show_words, show_chars, show_bytes,
+        );
     }
 }
