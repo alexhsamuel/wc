@@ -1,11 +1,10 @@
-// Testing üü
-
 use clap::{App, Arg};
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
 
 struct Counts {
+    count: usize,
     bytes: usize,
     chars: usize,
     words: usize,
@@ -13,6 +12,7 @@ struct Counts {
 }
 
 const EMPTY_COUNTS: Counts = Counts {
+    count: 0,
     bytes: 0,
     chars: 0,
     words: 0,
@@ -27,8 +27,18 @@ fn word_count(string: &str) -> usize {
     string.split_whitespace().count()
 }
 
+fn combine_counts(c0: &Counts, c1: &Counts) -> Counts {
+    Counts {
+        count: c0.count + c1.count,
+        bytes: c0.bytes + c1.bytes,
+        chars: c0.chars + c1.chars,
+        words: c0.words + c1.words,
+        lines: c0.lines + c1.lines,
+    }
+}
+
 fn count_file(file: &File) -> Counts {
-    let mut counts = Counts { ..EMPTY_COUNTS };
+    let mut counts = Counts { count: 1, ..EMPTY_COUNTS };
 
     let mut reader = BufReader::new(file);
     let mut line = String::new();
@@ -51,16 +61,16 @@ fn count_file(file: &File) -> Counts {
 
 fn print_counts(path: &str, counts: &Counts, show_lines: bool, show_words: bool, show_chars: bool, show_bytes: bool) {
     if show_lines {
-        print!("{:8} ", counts.lines);
+        print!("{:7} ", counts.lines);
     }
     if show_words {
-        print!("{:8} ", counts.words);
+        print!("{:7} ", counts.words);
     }
     if show_chars {
-        print!("{:8} ", counts.chars);
+        print!("{:7} ", counts.chars);
     }
     if show_bytes {
-        print!("{:8} ", counts.bytes);
+        print!("{:7} ", counts.bytes);
     }
     println!("{}", path);
 }    
@@ -109,6 +119,7 @@ fn main() {
         show_lines = true;
     }
 
+    let mut total = Counts { ..EMPTY_COUNTS };
     for path in opts.values_of("path").unwrap() {
         let file = match File::open(&path) {
             Ok(file) => file,
@@ -119,5 +130,9 @@ fn main() {
         };
         let counts = count_file(&file);
         print_counts(&path, &counts, show_lines, show_words, show_chars, show_bytes);
+        total = combine_counts(&total, &counts);
+    }
+    if total.count > 1 {
+        print_counts("total", &total, show_lines, show_words, show_chars, show_bytes);
     }
 }
