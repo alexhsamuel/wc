@@ -19,6 +19,11 @@ const EMPTY_COUNTS: Counts = Counts {
     lines: 0,
 };
 
+fn print_error(msg: &str) {
+    let exe = std::env::args().next().unwrap();
+    eprintln!("{}: {}", exe, msg);
+}
+
 fn char_count(string: &str) -> usize {
     string.chars().count()
 }
@@ -37,7 +42,7 @@ fn combine_counts(c0: &Counts, c1: &Counts) -> Counts {
     }
 }
 
-fn count_file(file: &File) -> Counts {
+fn count_file(path: &str, file: &File) -> Counts {
     let mut counts = Counts {
         count: 1,
         ..EMPTY_COUNTS
@@ -47,7 +52,13 @@ fn count_file(file: &File) -> Counts {
     let mut line = String::new();
     loop {
         line.clear();
-        let read_len = reader.read_line(&mut line).unwrap();
+        let read_len = match reader.read_line(&mut line) {
+            Ok(len) => len,
+            Err(why) => {
+                print_error(&format!("{}: {}", path, why));
+                return counts
+            }
+        };
         if read_len == 0 {
             // EOF.
             break;
@@ -86,7 +97,6 @@ fn print_counts(
 }
 
 fn main() {
-    let exe = std::env::args().next().unwrap();
     let opts = App::new("word count")
         .arg(
             Arg::with_name("bytes")
@@ -134,11 +144,11 @@ fn main() {
         let file = match File::open(&path) {
             Ok(file) => file,
             Err(why) => {
-                eprintln!("{}: {}: {}", exe, path, why);
+                print_error(&format!("{}: {}", path, why));
                 std::process::exit(1);
             }
         };
-        let counts = count_file(&file);
+        let counts = count_file(&path, &file);
         print_counts(
             &path, &counts, show_lines, show_words, show_chars, show_bytes,
         );
