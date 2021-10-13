@@ -70,7 +70,7 @@ fn count<R: Read>(path: &str, read: R) -> Counts {
             counts.chars += char_count(&line);
             counts.words += word_count(&line);
             counts.lines += 1;
-            counts.maxln = max(counts.maxln, char_count(&line.trim_end()));
+            counts.maxln = max(counts.maxln, char_count(line.trim_end()));
         }
     }
 
@@ -151,7 +151,7 @@ fn main() {
     }
     let print_row = |p: &str, c: &Counts| {
         print_counts(
-            &p, &c, show_lines, show_words, show_chars, show_bytes, show_maxln,
+            p, c, show_lines, show_words, show_chars, show_bytes, show_maxln,
         )
     };
 
@@ -172,9 +172,9 @@ fn main() {
                     std::process::exit(1);
                 }
             };
-            count(&path, file)
+            count(path, file)
         };
-        print_row(&path, &counts);
+        print_row(path, &counts);
         total = combine_counts(&total, &counts);
     }
     if total.count > 1 {
