@@ -56,7 +56,7 @@ fn count_file(path: &str, file: &File) -> Counts {
             Ok(len) => len,
             Err(why) => {
                 print_error(&format!("{}: {}", path, why));
-                return counts
+                return counts;
             }
         };
         if read_len == 0 {
