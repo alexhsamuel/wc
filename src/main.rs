@@ -1,4 +1,5 @@
 use clap::{App, Arg};
+use std::cmp::max;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -9,6 +10,7 @@ struct Counts {
     chars: usize,
     words: usize,
     lines: usize,
+    maxln: usize,
 }
 
 const EMPTY_COUNTS: Counts = Counts {
@@ -17,6 +19,7 @@ const EMPTY_COUNTS: Counts = Counts {
     chars: 0,
     words: 0,
     lines: 0,
+    maxln: 0,
 };
 
 fn print_error(msg: &str) {
@@ -39,6 +42,7 @@ fn combine_counts(c0: &Counts, c1: &Counts) -> Counts {
         chars: c0.chars + c1.chars,
         words: c0.words + c1.words,
         lines: c0.lines + c1.lines,
+        maxln: max(c0.maxln, c1.maxln),
     }
 }
 
@@ -67,6 +71,7 @@ fn count_file(path: &str, file: &File) -> Counts {
             counts.chars += char_count(&line);
             counts.words += word_count(&line);
             counts.lines += 1;
+            counts.maxln = max(counts.maxln, char_count(&line.trim_end()));
         }
     }
 
@@ -80,6 +85,7 @@ fn print_counts(
     show_words: bool,
     show_chars: bool,
     show_bytes: bool,
+    show_maxln: bool,
 ) {
     if show_lines {
         print!("{:7} ", counts.lines);
@@ -92,6 +98,9 @@ fn print_counts(
     }
     if show_bytes {
         print!("{:7} ", counts.bytes);
+    }
+    if show_maxln {
+        print!("{:7} ", counts.maxln);
     }
     println!("{}", path);
 }
@@ -123,6 +132,12 @@ fn main() {
                 .help("Prints newline counts"),
         )
         .arg(
+            Arg::with_name("maxln")
+                .short("L")
+                .long("max-line-length")
+                .help("Prints the maximum line length"),
+        )
+        .arg(
             Arg::with_name("path")
                 .value_name("PATH")
                 .required(true)
@@ -133,7 +148,8 @@ fn main() {
     let mut show_chars = opts.is_present("chars");
     let mut show_words = opts.is_present("words");
     let mut show_lines = opts.is_present("lines");
-    if !(show_bytes || show_chars || show_words || show_lines) {
+    let show_maxln = opts.is_present("maxln");
+    if !(show_bytes || show_chars || show_words || show_lines || show_maxln) {
         show_chars = true;
         show_words = true;
         show_lines = true;
@@ -150,13 +166,13 @@ fn main() {
         };
         let counts = count_file(&path, &file);
         print_counts(
-            &path, &counts, show_lines, show_words, show_chars, show_bytes,
+            &path, &counts, show_lines, show_words, show_chars, show_bytes, show_maxln,
         );
         total = combine_counts(&total, &counts);
     }
     if total.count > 1 {
         print_counts(
-            "total", &total, show_lines, show_words, show_chars, show_bytes,
+            "total", &total, show_lines, show_words, show_chars, show_bytes, show_maxln,
         );
     }
 }
