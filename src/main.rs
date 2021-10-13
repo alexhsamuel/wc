@@ -1,8 +1,7 @@
 use clap::{App, Arg};
 use std::cmp::max;
 use std::fs::File;
-use std::io::BufRead;
-use std::io::BufReader;
+use std::io::{stdin, BufRead, BufReader, Read};
 
 struct Counts {
     count: usize,
@@ -46,13 +45,13 @@ fn combine_counts(c0: &Counts, c1: &Counts) -> Counts {
     }
 }
 
-fn count_file(path: &str, file: &File) -> Counts {
+fn count<R: Read>(path: &str, read: R) -> Counts {
     let mut counts = Counts {
         count: 1,
         ..EMPTY_COUNTS
     };
 
-    let mut reader = BufReader::new(file);
+    let mut reader = BufReader::new(read);
     let mut line = String::new();
     loop {
         line.clear();
@@ -137,13 +136,9 @@ fn main() {
                 .long("max-line-length")
                 .help("Prints the maximum line length"),
         )
-        .arg(
-            Arg::with_name("path")
-                .value_name("PATH")
-                .required(true)
-                .multiple(true),
-        )
+        .arg(Arg::with_name("path").value_name("PATH").multiple(true))
         .get_matches();
+
     let show_bytes = opts.is_present("bytes");
     let mut show_chars = opts.is_present("chars");
     let mut show_words = opts.is_present("words");
@@ -160,16 +155,25 @@ fn main() {
         )
     };
 
+    let paths = match opts.values_of("path") {
+        Some(vals) => vals.collect::<Vec<_>>(),
+        None => vec!["-"],
+    };
+
     let mut total = Counts { ..EMPTY_COUNTS };
-    for path in opts.values_of("path").unwrap() {
-        let file = match File::open(&path) {
-            Ok(file) => file,
-            Err(why) => {
-                print_error(&format!("{}: {}", path, why));
-                std::process::exit(1);
-            }
+    for path in paths {
+        let counts = if path == "-" {
+            count("-", stdin())
+        } else {
+            let file = match File::open(&path) {
+                Ok(file) => file,
+                Err(why) => {
+                    print_error(&format!("{}: {}", path, why));
+                    std::process::exit(1);
+                }
+            };
+            count(&path, file)
         };
-        let counts = count_file(&path, &file);
         print_row(&path, &counts);
         total = combine_counts(&total, &counts);
     }
