@@ -3,6 +3,7 @@ use std::cmp::max;
 use std::fs::File;
 use std::io::{stdin, BufRead, BufReader, Read};
 
+#[derive(Default)]
 struct Counts {
     count: usize,
     bytes: usize,
@@ -11,15 +12,6 @@ struct Counts {
     lines: usize,
     maxln: usize,
 }
-
-const EMPTY_COUNTS: Counts = Counts {
-    count: 0,
-    bytes: 0,
-    chars: 0,
-    words: 0,
-    lines: 0,
-    maxln: 0,
-};
 
 fn print_error(msg: &str) {
     let exe = std::env::args().next().unwrap();
@@ -48,7 +40,7 @@ fn combine_counts(c0: &Counts, c1: &Counts) -> Counts {
 fn count<R: Read>(path: &str, read: R) -> Counts {
     let mut counts = Counts {
         count: 1,
-        ..EMPTY_COUNTS
+        ..Default::default()
     };
 
     let mut reader = BufReader::new(read);
@@ -160,7 +152,7 @@ fn main() {
         None => vec!["-"],
     };
 
-    let mut total = Counts { ..EMPTY_COUNTS };
+    let mut total: Counts = Default::default();
     for path in paths {
         let counts = if path == "-" {
             count("-", stdin())
